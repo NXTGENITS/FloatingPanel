@@ -17,6 +17,7 @@ The new interface displays the related contents and utilities in parallel as a u
   s.swift_version       = '5.0'
 
   s.framework           = "UIKit"
+  s.visionos.deployment_target = '1.0'
 
   s.license             = { :type => "MIT", :file => "LICENSE" }
 end
