@@ -282,17 +282,31 @@ class Core: NSObject, UIGestureRecognizerDelegate {
         case is FloatingPanelPanGestureRecognizer:
             // All visible panels' pan gesture should be recognized simultaneously.
             return true
-        case is UIPanGestureRecognizer,
-             is UISwipeGestureRecognizer,
-             is UIRotationGestureRecognizer,
-             is UIScreenEdgePanGestureRecognizer,
-             is UIPinchGestureRecognizer:
-            if surfaceView.grabberAreaContains(gestureRecognizer.location(in: surfaceView)) {
-                return true
-            }
+            #if os(visionOS)
+            case is UIPanGestureRecognizer,
+                 is UISwipeGestureRecognizer,
+                 is UIRotationGestureRecognizer,
+                // is UIScreenEdgePanGestureRecognizer,
+                 is UIPinchGestureRecognizer:
+                if surfaceView.grabberAreaContains(gestureRecognizer.location(in: surfaceView)) {
+                    return true
+                }
             // all gestures of the tracking scroll view should be recognized in parallel
             // and handle them in self.handle(panGesture:)
             return scrollView?.gestureRecognizers?.contains(otherGestureRecognizer) ?? false
+            #else
+            case is UIPanGestureRecognizer,
+                 is UISwipeGestureRecognizer,
+                 is UIRotationGestureRecognizer,
+                 is UIScreenEdgePanGestureRecognizer,
+                 is UIPinchGestureRecognizer:
+                if surfaceView.grabberAreaContains(gestureRecognizer.location(in: surfaceView)) {
+                    return true
+                }
+            // all gestures of the tracking scroll view should be recognized in parallel
+            // and handle them in self.handle(panGesture:)
+            return scrollView?.gestureRecognizers?.contains(otherGestureRecognizer) ?? false
+            #endif
         default:
             // Should recognize tap/long press gestures in parallel when the surface view is at an anchor position.
             let adapterY = layoutAdapter.position(for: state)
@@ -360,7 +374,23 @@ class Core: NSObject, UIGestureRecognizerDelegate {
                 return false
             }
             return true
-        case is UIPanGestureRecognizer,
+            #if os(visionOS)
+            case is UIPanGestureRecognizer,
+             is UISwipeGestureRecognizer,
+                 is UIRotationGestureRecognizer,
+                 //is UIScreenEdgePanGestureRecognizer,
+                 is UIPinchGestureRecognizer:
+                if otherGestureRecognizer.name == "_UISheetInteractionBackgroundDismissRecognizer" {
+                    // Should begin the pan gesture without waiting the dismiss gesture of a sheet modal.
+                    return false
+                }
+                if surfaceView.grabberAreaContains(gestureRecognizer.location(in: surfaceView)) {
+                    return false
+                }
+                // Do not begin the pan gesture until these gestures fail
+                return true
+            #else
+            case is UIPanGestureRecognizer,
              is UISwipeGestureRecognizer,
              is UIRotationGestureRecognizer,
              is UIScreenEdgePanGestureRecognizer,
@@ -374,6 +404,7 @@ class Core: NSObject, UIGestureRecognizerDelegate {
             }
             // Do not begin the pan gesture until these gestures fail
             return true
+            #endif
         default:
             // Should begin the pan gesture without waiting tap/long press gestures fail
             return false

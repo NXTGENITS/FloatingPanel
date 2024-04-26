@@ -68,9 +68,11 @@ extension UIView {
     /// So this method returns `UIScreen.main` scale if the scale value is zero, for testing mainly.
     var fp_displayScale: CGFloat {
         let ret = traitCollection.displayScale
+        #if !os(visionOS)
         if ret == 0.0 {
             return UIScreen.main.scale
         }
+        #endif
         return ret
     }
 }
